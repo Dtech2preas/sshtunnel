@@ -5,12 +5,14 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
+import org.sshtunnel.utils.TrafficMonitor;
+
 /**
  * A StreamForwarder forwards data between two given streams. If two
  * StreamForwarder threads are used (one for each direction) then one can be
  * configured to shutdown the underlying channel/socket if both threads have
  * finished forwarding (EOF).
- * 
+ *
  * @author Christian Plattner, plattner@trilead.com
  * @version $Id: StreamForwarder.java,v 1.1 2007/10/15 12:49:56 cplattne Exp $
  */
@@ -40,6 +42,15 @@ public class StreamForwarder extends Thread {
 				int len = is.read(buffer);
 				if (len <= 0)
 					break;
+
+				if (mode != null) {
+					if (mode.startsWith("LocalToRemote")) {
+						TrafficMonitor.updateTraffic(len, 0);
+					} else if (mode.startsWith("RemoteToLocal")) {
+						TrafficMonitor.updateTraffic(0, len);
+					}
+				}
+
 				os.write(buffer, 0, len);
 				os.flush();
 			}
